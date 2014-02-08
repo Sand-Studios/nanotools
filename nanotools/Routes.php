@@ -2,8 +2,10 @@
 
 class Routes {
 
+    const ACTION_RUN = 'run';
+
     private static $actionMap = [];
-    private static $defaultActionName = null;
+    private static $defaultActionName = 'index';
     private static $notFoundAction = null;
 
     private static function on($actionName, $methodName, $action) {
@@ -40,42 +42,61 @@ class Routes {
         self::$notFoundAction = $action;
     }
 
-    public static function forward($action = null, array $params = array(), $method = 'GET', $exit = true) {
-        self::run($action, $method, $params);
+    public static function forward($action = null, array $actionParams = array(), $method = 'GET', $exit = true) {
+        self::run($action, $method, $actionParams);
         if ($exit) {
             exit;
         }
     }
 
-    public static function redirect($action = null, array $params = array()) {
+    public static function redirect($action = null, array $actionParams = array()) {
         $host = $_SERVER['HTTP_HOST'];
         $uri = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-        $params['action'] = $action;
+        $actionParams['action'] = $action;
 
         $header = "Location: http://$host$uri/index.php";
-        if (count($params) > 0) {
-            $header .= '?' . keyValueImplode('=', '&', $params);
+        if (count($actionParams) > 0) {
+            $header .= '?' . keyValueImplode('=', '&', $actionParams);
         }
         header($header);
         exit;
     }
 
-    public static function run($action = null, $method = null, array $params = array()) {
+    public static function run($action = null, $method = null, array $actionParams = array()) {
         $getAction = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
         $action = is_null($action) ? $getAction : $action;
         $method = is_null($method) ? $_SERVER['REQUEST_METHOD'] : $method;
 
         $actionHandler = self::route($action, $method);
 
-        $params = array_merge($_REQUEST, $params);
+        $paramPlaceholders = null;
+        $userFunc = null;
 
+        // Determine, what to run and what parameters are required. Provide parameter placeholders.
         if (is_callable($actionHandler)) {
-            call_user_func_array($actionHandler, $params);
-        } elseif (is_callable([$actionHandler, 'run'])) {
-            call_user_func_array([$actionHandler, 'tun'], $params);
+            $paramPlaceholders = self::getDeclaredParams(new ReflectionFunction($actionHandler));
+            $userFunc = $actionHandler;
+        } elseif (is_callable([$actionHandler, self::ACTION_RUN])) {
+            $paramPlaceholders = self::getDeclaredParams(
+                                     new ReflectionMethod($actionHandler, self::ACTION_RUN));
+            $userFunc = [$actionHandler, self::ACTION_RUN];
         } else {
             throw new Exception('Defined action is not callable or does not have a method run()');
         }
+
+        $actionParams = array_merge($paramPlaceholders, $_REQUEST, $actionParams);
+        call_user_func_array($userFunc, $actionParams);
+    }
+
+    private static function getDeclaredParams($reflection) {
+        $paramPlaceholders = [];
+        $parameters = $reflection->getParameters();
+        foreach ($parameters as $p) {
+            if (!$p->isOptional()) {
+                $paramPlaceholders[$p->getName()] = null;
+            }
+        }
+        return $paramPlaceholders;
     }
 
     private static function route($action, $method) {

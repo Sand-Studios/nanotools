@@ -8,12 +8,9 @@ class IndexAction {
         $this->template = Container::get('template');
     }
 
-    public function run() {
+    public function run($action) {
+        var_dump(func_get_args());
         $this->template->render('index');
-    }
-
-    public function __invoke() {
-        $this->run();
     }
 
 }

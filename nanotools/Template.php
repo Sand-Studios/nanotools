@@ -32,7 +32,7 @@ class Template {
         $scriptFile = $this->viewDirectory . self::DIRECTORY_SEPARATOR . $script . '.php';
         $this->checkFileExists($scriptFile);
 
-        // set assigned vars for local script scope
+        // Set assigned vars for local script scope.
         foreach ($this->vars as $key => $value) {
             $$key = $value;
         }

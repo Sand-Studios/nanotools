@@ -10,12 +10,14 @@ Container::prototype('template', function() use ($conf) {
     return new Template($conf['viewDirectory'], 'layout');
 });
 
-//Container::register('database', function() {
+//Container::singleton('database', function() {
 //    return new Database('connectionString', 'username', 'password', 'options');
 //});
 
-Routes::index('index');
 Routes::get('index', new IndexAction());
+Routes::get('user', function($user) {
+   var_dump(func_get_args());
+});
 Routes::notFound(function() {
     echo '404';
 });

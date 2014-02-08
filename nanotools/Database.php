@@ -11,7 +11,7 @@ class Database extends PDO {
      */
     public function select($sql, array $params = array(), $mode = PDO::FETCH_ASSOC) {
         $st = $this->prepare($sql);
-        $this->_bindData($st, $params);
+        $this->bindData($st, $params);
         $st->execute();
         return $st->fetchAll($mode);
     }
@@ -28,7 +28,7 @@ class Database extends PDO {
         $sql = "INSERT INTO $table ($fieldKeys) VALUES ($fieldValues)";
 
         $st = $this->prepare($sql);
-        $this->_bindData($st, $fields);
+        $this->bindData($st, $fields);
         $st->execute();
     }
 
@@ -49,8 +49,8 @@ class Database extends PDO {
         $sql = "UPDATE $table SET $values WHERE $where";
         $st = $this->prepare($sql);
 
-        $this->_bindData($st, $fields);
-        $this->_bindData($st, $params);
+        $this->bindData($st, $fields);
+        $this->bindData($st, $params);
 
         $st->execute();
     }
@@ -65,11 +65,11 @@ class Database extends PDO {
     public function delete($table, $where, array $params = array(), $limit = 1) {
         $sql = "DELETE FROM $table WHERE $where LIMIT $limit";
         $st = $this->prepare($sql);
-        $this->_bindData($st, $params);
+        $this->bindData($st, $params);
         $st->execute();
     }
 
-    protected function _bindData(PDOStatement $st, array $params) {
+    private function bindData(PDOStatement $st, array $params) {
         foreach ($params as $key => $value) {
             $key = ltrim($key, ':');
             $st->bindValue(":$key", $value);
