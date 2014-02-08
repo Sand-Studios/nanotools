@@ -1,18 +1,23 @@
 <?php
 
-$conf = require ('conf.php');
-require ('nanotools/Autoload.php');
+$conf = require('conf.php');
+require('nanotools/Import.php');
 
-Autoload::import('nanotools');
-Autoload::import('actions');
+Import::directory('nanotools');
+Import::directory('actions');
 
-$template = new Template($conf['viewDirectory'], 'layout');
+Container::prototype('template', function() use ($conf) {
+    return new Template($conf['viewDirectory'], 'layout');
+});
 
-Router::initialize();
+//Container::register('database', function() {
+//    return new Database('connectionString', 'username', 'password', 'options');
+//});
 
-$indexAction = new IndexAction($template);
+Routes::index('index');
+Routes::get('index', new IndexAction());
+Routes::notFound(function() {
+    echo '404';
+});
 
-Router::onGet('index', $indexAction);
-Router::setDefault($indexAction);
-
-Router::run();
+Routes::run();

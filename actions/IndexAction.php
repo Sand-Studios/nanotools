@@ -1,15 +1,19 @@
 <?php
 
-class IndexAction implements Action {
+class IndexAction {
 
-	private $template;
+    private $template;
 
-	public function __construct($template) {
-		$this->template = $template;
-	}
+    public function __construct() {
+        $this->template = Container::get('template');
+    }
 
-	public function run() {
-		$this->template->render('index');
-	}
+    public function run() {
+        $this->template->render('index');
+    }
+
+    public function __invoke() {
+        $this->run();
+    }
 
 }
