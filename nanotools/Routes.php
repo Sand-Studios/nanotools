@@ -62,41 +62,43 @@ class Routes {
         exit;
     }
 
-    public static function run($action = null, $method = null, array $actionParams = array()) {
+    public static function run($action = null, $method = null, array $parameters = array()) {
         $getAction = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
         $action = is_null($action) ? $getAction : $action;
         $method = is_null($method) ? $_SERVER['REQUEST_METHOD'] : $method;
 
         $actionHandler = self::route($action, $method);
 
-        $paramPlaceholders = null;
-        $userFunc = null;
+        list($callback, $placeholders) = self::getCallbackAndPlaceholders($actionHandler);
 
-        // Determine, what to run and what parameters are required. Provide parameter placeholders.
-        if (is_callable($actionHandler)) {
-            $paramPlaceholders = self::getDeclaredParams(new ReflectionFunction($actionHandler));
-            $userFunc = $actionHandler;
-        } elseif (is_callable([$actionHandler, self::ACTION_RUN])) {
-            $paramPlaceholders = self::getDeclaredParams(
-                                     new ReflectionMethod($actionHandler, self::ACTION_RUN));
-            $userFunc = [$actionHandler, self::ACTION_RUN];
-        } else {
-            throw new Exception('Defined action is not callable or does not have a method run()');
-        }
-
-        $actionParams = array_merge($paramPlaceholders, $_REQUEST, $actionParams);
-        call_user_func_array($userFunc, $actionParams);
+        $parameters = array_merge($placeholders, $_REQUEST, $parameters);
+        call_user_func_array($callback, $parameters);
     }
 
-    private static function getDeclaredParams($reflection) {
-        $paramPlaceholders = [];
-        $parameters = $reflection->getParameters();
+    private static function getCallbackAndPlaceholders($actionHandler) {
+        list($callback, $reflector) = self::getCallbackAndReflector($actionHandler);
+
+        $placeholders = [];
+        $parameters = $reflector->getParameters();
         foreach ($parameters as $p) {
             if (!$p->isOptional()) {
-                $paramPlaceholders[$p->getName()] = null;
+                $placeholders[$p->getName()] = null;
             }
         }
-        return $paramPlaceholders;
+        return [$callback, $placeholders];
+    }
+
+    private static function getCallbackAndReflector($actionHandler) {
+        if (is_callable($actionHandler)) {
+            $reflector = new ReflectionFunction($actionHandler);
+            return [$actionHandler, $reflector];
+        }
+        if (is_callable([$actionHandler, self::ACTION_RUN])) {
+            $callback = [$actionHandler, self::ACTION_RUN];
+            $reflector = new ReflectionMethod($actionHandler, self::ACTION_RUN);
+            return [$callback, $reflector];
+        }
+        throw new Exception('Defined action is not callable or does not have a method run()');
     }
 
     private static function route($action, $method) {
