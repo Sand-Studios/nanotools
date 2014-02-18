@@ -2,84 +2,132 @@
 
 class Routes {
 
-    const ACTION_RUN = 'run';
+    const ACTION_RUN_METHOD = 'run';
 
     const GET = 'GET';
     const POST = 'POST';
     const PUT = 'PUT';
     const DELETE = 'DELETE';
 
-    private static $actionMap = [];
+    private static $handlers = [];
     private static $defaultActionName = 'index';
-    private static $notFoundAction = null;
+    private static $notFoundHandler = null;
 
     /**
      * @var Request The cached request data.
      */
     private static $request = null;
 
+    /**
+     * Define the default (index) action.
+     * @param string $actionName The index action.
+     */
     public static function index($actionName) {
         self::$defaultActionName = $actionName;
     }
 
-    public static function get($actionName, $action) {
-        self::on($actionName, self::GET, $action);
+    /**
+     * Define an action handler for HTTP GET.
+     * @param string $actionName The action name.
+     * @param object $actionHandler The Callable or class implementing run().
+     */
+    public static function get($actionName, $actionHandler) {
+        self::register($actionName, self::GET, $actionHandler);
     }
 
-    public static function post($actionName, $action) {
-        self::on($actionName, self::POST, $action);
+    /**
+     * Define an action handler for HTTP POST.
+     * @param string $actionName The action name.
+     * @param object $actionHandler The Callable or class implementing run().
+     */
+    public static function post($actionName, $actionHandler) {
+        self::register($actionName, self::POST, $actionHandler);
     }
 
-    public static function put($actionName, $action) {
-        self::on($actionName, self::PUT, $action);
+    /**
+     * Define an action handler for HTTP PUT.
+     * @param string $actionName The action name.
+     * @param object $actionHandler The Callable or class implementing run().
+     */
+    public static function put($actionName, $actionHandler) {
+        self::register($actionName, self::PUT, $actionHandler);
     }
 
-    public static function delete($actionName, $action) {
-        self::on($actionName, self::DELETE, $action);
+    /**
+     * Define an action handler for HTTP DELETE.
+     * @param string $actionName The action name.
+     * @param object $actionHandler The Callable or class implementing run().
+     */
+    public static function delete($actionName, $actionHandler) {
+        self::register($actionName, self::DELETE, $actionHandler);
     }
 
-    public static function notFound($action) {
-        self::$notFoundAction = $action;
+    /**
+     * Define an action handler for resource not found.
+     * @param object $actionHandler The Callable or class implementing run().
+     */
+    public static function notFound($actionHandler) {
+        self::$notFoundHandler = $actionHandler;
     }
 
-    public static function forward($action = null, array $actionParams = array(), $method = 'GET', $exit = true) {
-        self::run($action, $method, $actionParams);
+    /**
+     * Bootstrap and run another action handler. Will be routed for HTTP GET.
+     * @param string $actionName The action name.
+     * @param array $requestParameters Additional request parameters. Will override existing ones.
+     * @param bool $exit Whether to exit after the execution returns.
+     */
+    public static function forward($actionName, array $requestParameters = array(), $exit = true) {
+        self::runInternal($actionName, Routes::GET, $requestParameters);
         if ($exit) {
             exit;
         }
     }
 
-    public static function redirect($action = null, array $actionParams = array()) {
+    /**
+     * Initiate a roundtrip making the client request the action via HTTP GET.
+     * @param string $actionName The action name.
+     * @param array $requestParameters Request parameters.
+     */
+    public static function redirect($actionName, array $requestParameters = []) {
         $host = $_SERVER['HTTP_HOST'];
         $uri = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-        $actionParams['action'] = $action;
+        $requestParameters['action'] = $actionName;
 
-        $header = "Location: http://$host$uri/index.php";
-        if (count($actionParams) > 0) {
-            $header .= '?' . self::keyValueImplode('=', '&', $actionParams);
+        $header = "Location: http://$host$uri/index.php"; // TODO: what about rewritten urls?
+        if (count($requestParameters) > 0) {
+            $header .= '?' . self::keyValueImplode('=', '&', $requestParameters);
         }
         header($header);
         exit;
     }
 
     /**
-     * @return Request
+     * Get the request data wrapper. Useful for accessing vars, that are not in $_GET or $_POST.
+     * @return Request The request wrapper.
      */
     public static function requestData() {
         self::initRequest();
         return self::$request;
     }
 
-    public static function run($action = null, $method = null, array $parameters = array()) {
+    /**
+     * Bootstrap and run an action based on current http request.
+     */
+    public static function run() {
+        self::runInternal();
+    }
+
+    private static function runInternal($actionName = null, $methodName = null, array $parameters = []) {
         self::initRequest();
-        $getAction = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
-        $action = is_null($action) ? $getAction : $action;
-        $method = is_null($method) ? self::$request->getMethod() : $method;
+        $requestActionName = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
+        $actionName = is_null($actionName) ? $requestActionName : $actionName;
+        $methodName = is_null($methodName) ? self::$request->getMethod() : $methodName;
 
-        $actionHandler = self::route($action, $method);
+        $actionHandler = self::route($actionName, $methodName);
         list($callback, $placeholders) = self::getCallbackAndPlaceholders($actionHandler);
+        $parameters = empty($placeholders) ? $parameters :
+                array_merge($placeholders, self::$request->getData(), $parameters);
 
-        $parameters = array_merge($placeholders, self::$request->getData(), $parameters);
         call_user_func_array($callback, $parameters);
     }
 
@@ -89,35 +137,34 @@ class Routes {
         }
     }
 
-    private static function route($action, $method) {
-        if (array_key_exists($action, self::$actionMap)) {
-            $byAction = self::$actionMap[$action];
-            if (array_key_exists($method, $byAction)) {
-                return $byAction[$method];
+    private static function route($actionName, $methodName) {
+        if (array_key_exists($actionName, self::$handlers)) {
+            $byAction = self::$handlers[$actionName];
+            if (array_key_exists($methodName, $byAction)) {
+                return $byAction[$methodName];
             }
         }
-        if (!is_null(self::$notFoundAction)) {
-            return self::$notFoundAction;
+        if (!is_null(self::$notFoundHandler)) {
+            return self::$notFoundHandler;
         }
         throw new Exception('No action defined.');
     }
 
-    private static function on($actionName, $methodName, $action) {
+    private static function register($actionName, $methodName, $actionHandler) {
         if (!is_string($actionName)) {
             throw new Exception('Need to set an action name.');
         }
-        if (!array_key_exists($actionName, self::$actionMap)) {
-            self::$actionMap[$actionName] = [];
+        if (!array_key_exists($actionName, self::$handlers)) {
+            self::$handlers[$actionName] = [];
         }
-        self::$actionMap[$actionName][$methodName] = $action;
+        self::$handlers[$actionName][$methodName] = $actionHandler;
     }
 
     private static function getCallbackAndPlaceholders($actionHandler) {
         list($callback, $reflector) = self::getCallbackAndReflector($actionHandler);
 
         $placeholders = [];
-        $parameters = $reflector->getParameters();
-        foreach ($parameters as $p) {
+        foreach ($reflector->getParameters() as $p) {
             if (!$p->isOptional()) {
                 $placeholders[$p->getName()] = null;
             }
@@ -130,9 +177,9 @@ class Routes {
             $reflector = new ReflectionFunction($actionHandler);
             return [$actionHandler, $reflector];
         }
-        if (is_callable([$actionHandler, self::ACTION_RUN])) {
-            $callback = [$actionHandler, self::ACTION_RUN];
-            $reflector = new ReflectionMethod($actionHandler, self::ACTION_RUN);
+        if (is_callable([$actionHandler, self::ACTION_RUN_METHOD])) {
+            $callback = [$actionHandler, self::ACTION_RUN_METHOD];
+            $reflector = new ReflectionMethod($actionHandler, self::ACTION_RUN_METHOD);
             return [$callback, $reflector];
         }
         throw new Exception('Defined action is not callable or does not have a method run()');
@@ -163,31 +210,42 @@ class Request {
         ];
     }
 
+    /**
+     * Get the current HTTP method.
+     * @return string HTTP request method.
+     */
     public function getMethod() {
         return $this->method;
     }
 
+    /**
+     * Get the request data for current or any HTTP method.
+     * @param string $method HTTP method. If null, current method is used.
+     * @return array Request data. GET parameters are always included, but overwritten if their
+     * name is in conflict with other parameter.
+     */
     public function getData($method = null) {
         if ($method == null) {
             $method = $this->method;
         }
         if (is_null($this->data[$method])) {
-            $this->data[$method] = $this->initData($method);
+            $this->data[$method] = $this->getRequestData($method);
         }
         return $this->data[$this->method];
     }
 
-    private function initData($method) {
+    private function getRequestData($method) {
+        // GET parameters are always overwritten by others, when in conflict.
         switch ($method) {
             case Routes::GET:
                 return $_GET;
             case Routes::POST:
-                return $_POST;
+                return array_merge($_GET, $_POST);
             case Routes::PUT: // Fallthrough.
             case Routes::DELETE:
                 $requestData = [];
                 parse_str(file_get_contents("php://input"), $requestData);
-                return $requestData;
+                return array_merge($_GET, $requestData);
             default:
                 return []; // Other request methods not supported yet.
         }
