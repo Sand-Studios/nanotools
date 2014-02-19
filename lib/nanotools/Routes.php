@@ -35,7 +35,7 @@ class Routes {
     /**
      * Define an action handler for HTTP GET.
      * @param string $actionName The action name.
-     * @param object $actionHandler The Callable or class implementing run().
+     * @param mixed $actionHandler The Callable or class implementing run().
      */
     public static function get($actionName, $actionHandler) {
         self::register($actionName, self::GET, $actionHandler);
@@ -44,7 +44,7 @@ class Routes {
     /**
      * Define an action handler for HTTP POST.
      * @param string $actionName The action name.
-     * @param object $actionHandler The Callable or class implementing run().
+     * @param mixed $actionHandler The Callable or class implementing run().
      */
     public static function post($actionName, $actionHandler) {
         self::register($actionName, self::POST, $actionHandler);
@@ -53,7 +53,7 @@ class Routes {
     /**
      * Define an action handler for HTTP PUT.
      * @param string $actionName The action name.
-     * @param object $actionHandler The Callable or class implementing run().
+     * @param mixed $actionHandler The Callable or class implementing run().
      */
     public static function put($actionName, $actionHandler) {
         self::register($actionName, self::PUT, $actionHandler);
@@ -62,7 +62,7 @@ class Routes {
     /**
      * Define an action handler for HTTP DELETE.
      * @param string $actionName The action name.
-     * @param object $actionHandler The Callable or class implementing run().
+     * @param mixed $actionHandler The Callable or class implementing run().
      */
     public static function delete($actionName, $actionHandler) {
         self::register($actionName, self::DELETE, $actionHandler);
@@ -70,7 +70,7 @@ class Routes {
 
     /**
      * Define an action handler for resource not found.
-     * @param object $actionHandler The Callable or class implementing run().
+     * @param mixed $actionHandler The Callable or class implementing run().
      */
     public static function notFound($actionHandler) {
         self::$notFoundHandler = $actionHandler;

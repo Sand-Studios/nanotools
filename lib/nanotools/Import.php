@@ -23,7 +23,8 @@ class Import {
     }
 
     /**
-     * Registers an autoloader for the provided directory. Does not explore recursively.
+     * Registers an autoloader for the provided directory. Loads classes from that directory. Those
+     * classes must not have a namespace.
      * @param string $directory The directory to search.
      * @throws Exception When directory does not exist.
      */
@@ -33,7 +34,8 @@ class Import {
     }
 
     /**
-     * Registers an autoloader for the provided directory. Loads based on namespaces and PSR0.
+     * Registers an autoloader for the provided directory. That directory is then used as a starting
+     * point for namespace based autoloading.
      * @param string $directory The directory to search.
      * @throws Exception When directory does not exist.
      */
