@@ -1,7 +1,5 @@
 <?php
 
-error_reporting(E_ALL);
-
 $conf = require('conf.php');
 
 use nanotools\Container;
