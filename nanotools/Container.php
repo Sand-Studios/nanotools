@@ -18,20 +18,20 @@ class Container {
     /**
      * Register a new component initializer under a name with prototype scope.
      * @param string $name The registered name.
-     * @param Callable $initializer The Callable that creates the component.
+     * @param callable $initializer The callable that creates the component.
      * @throws Exception When the name is already in use.
      */
-    public static function prototype($name, Callable $initializer) {
+    public static function prototype($name, callable $initializer) {
         self::register($name, $initializer, self::PROTOTYPE);
     }
 
     /**
      * Register a new component initializer under a name with singleton scope.
      * @param string $name The registered name.
-     * @param Callable $initializer The Callable that creates the component.
+     * @param callable $initializer The callable that creates the component.
      * @throws Exception When the name is already in use.
      */
-    public static function singleton($name, Callable $initializer) {
+    public static function singleton($name, callable $initializer) {
         self::register($name, $initializer, self::SINGLETON);
     }
 
@@ -65,7 +65,7 @@ class Container {
         return array_key_exists($name, self::$initializers);
     }
 
-    private static function register($name, Callable $initializer, $scope) {
+    private static function register($name, callable $initializer, $scope) {
         if (self::registered($name)) {
             throw new Exception("The name: $name is already in use");
         }
