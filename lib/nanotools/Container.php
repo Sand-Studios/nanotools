@@ -1,5 +1,9 @@
 <?php
 
+namespace nanotools;
+
+use Exception;
+
 class Container {
 
     const SINGLETON = 'singleton';

@@ -1,5 +1,10 @@
 <?php
 
+namespace nanotools;
+
+use PDO;
+use PDOStatement;
+
 class Database extends PDO {
 
     /**

@@ -1,5 +1,11 @@
 <?php
 
+namespace nanotools;
+
+use Exception;
+use ReflectionFunction;
+use ReflectionMethod;
+
 class Routes {
 
     const ACTION_RUN_METHOD = 'run';

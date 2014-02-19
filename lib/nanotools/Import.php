@@ -1,5 +1,9 @@
 <?php
 
+namespace nanotools;
+
+use Exception;
+
 class Import {
 
     const NAMESPACE_SEPARATOR = '\\';
@@ -24,8 +28,8 @@ class Import {
      * @throws Exception When directory does not exist.
      */
     public static final function directory($directory) {
-        self::checkDirecory($directory);
-        spl_autoload_register([new self($directory), 'loadClassFromDirectory']);
+        self::checkDirectory($directory);
+        spl_autoload_register([new Import($directory), 'loadClassFromDirectory']);
     }
 
     /**
@@ -34,11 +38,11 @@ class Import {
      * @throws Exception When directory does not exist.
      */
     public static final function namespaced($directory) {
-        self::checkDirecory($directory);
-        spl_autoload_register([new self($directory), 'loadClassFromNamespaceRoot']);
+        self::checkDirectory($directory);
+        spl_autoload_register([new Import($directory), 'loadClassFromDirectoryNamespaced']);
     }
 
-    private static function checkDirecory($directory) {
+    private static function checkDirectory($directory) {
         if (empty($directory) || !file_exists($directory) || !is_dir($directory)) {
             throw new Exception("Directory does not exist: $directory.");
         }
@@ -47,12 +51,10 @@ class Import {
     public function loadClassFromDirectory($className) {
         $filename = $className . '.php';
         $path = $this->directory . DIRECTORY_SEPARATOR . $filename;
-        if (is_readable($path)) { // Allow other loaders to include the file.
-            require($path);
-        }
+        $this->load($path);
     }
 
-    public function loadClassFromNamespaceRoot($className) {
+    public function loadClassFromDirectoryNamespaced($className) {
         $namespacePath = '';
         $lastNamespacePosition = strripos($className, self::NAMESPACE_SEPARATOR);
         if (false !== $lastNamespacePosition) {
@@ -60,9 +62,13 @@ class Import {
             $className = substr($className, $lastNamespacePosition + 1);
             $namespacePath = str_replace(self::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
         }
-        $namespacePath .= str_replace('_', DIRECTORY_SEPARATOR, $className) . 'php';
+        $namespacePath .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
 
         $path = (is_null($this->directory) ? '' : $this->directory . DIRECTORY_SEPARATOR) . $namespacePath;
+        $this->load($path);
+    }
+
+    private function load($path) {
         if (is_readable($path)) { // Allow other loaders to include the file.
             require $path;
         }

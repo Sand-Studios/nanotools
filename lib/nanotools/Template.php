@@ -1,5 +1,9 @@
 <?php
 
+namespace nanotools;
+
+use Exception;
+
 class Template {
 
     const DIRECTORY_SEPARATOR = '/';

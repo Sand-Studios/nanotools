@@ -1,5 +1,7 @@
 <?php
 
+namespace nanotools;
+
 class Hash {
 
     /**

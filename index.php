@@ -3,9 +3,16 @@
 error_reporting(E_ALL);
 
 $conf = require('conf.php');
-require('nanotools/Import.php');
 
-Import::directory('nanotools');
+use nanotools\Container;
+use nanotools\Database;
+use nanotools\Import;
+use nanotools\Routes;
+use nanotools\Template;
+
+require('lib/nanotools/Import.php');
+Import::namespaced('lib'); // == Import::directory('lib/nanotools');
+
 Import::directory('actions');
 
 Container::prototype('template', function () use ($conf) {
@@ -17,6 +24,7 @@ Container::singleton('database', function () {
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $db;
 });
+
 
 //$db = Container::get('database');
 ///** @var Database $db */
@@ -38,5 +46,6 @@ Routes::get('user', function ($id) {
 Routes::notFound(function () {
     echo '404';
 });
+
 
 Routes::run();

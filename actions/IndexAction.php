@@ -1,5 +1,7 @@
 <?php
 
+use nanotools\Container;
+
 class IndexAction {
 
     private $template;

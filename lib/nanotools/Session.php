@@ -1,5 +1,7 @@
 <?php
 
+namespace nanotools;
+
 class Session {
 
     public static function init() {
