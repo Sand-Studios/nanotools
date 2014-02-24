@@ -50,8 +50,7 @@ class Container {
             throw new Exception('No component under that name.');
         }
         $initializer = self::$initializers[$name];
-        if (array_key_exists($name, self::$singletons)) {
-            // Cache, if singleton.
+        if (array_key_exists($name, self::$singletons)) { // Check if not already created.
             if (is_null(self::$singletons[$name])) {
                 self::$singletons[$name] = $initializer();
             }

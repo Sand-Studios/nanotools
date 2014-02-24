@@ -1,6 +1,7 @@
 <?php
 
 namespace nanotools;
+use Exception;
 
 /**
  * A PSR4 compliant ClassLoader.
