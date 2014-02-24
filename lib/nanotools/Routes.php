@@ -19,10 +19,13 @@ class Routes {
     private static $defaultActionName = 'index';
     private static $notFoundHandler = null;
 
-    /**
-     * @var Request The cached request data.
-     */
-    private static $request = null;
+    private static $requestBody = null;
+    private static $requestData = [
+            self::GET => null,
+            self::POST => null,
+            self::PUT => null,
+            self::DELETE => null
+    ];
 
     /**
      * Define the default (index) action.
@@ -108,39 +111,59 @@ class Routes {
     }
 
     /**
-     * Get the request data wrapper. Useful for accessing vars, that are not in $_GET or $_POST.
-     * @return Request The request wrapper.
-     */
-    public static function requestData() {
-        self::initRequest();
-        return self::$request;
-    }
-
-    /**
      * Bootstrap and run an action based on current http request.
      */
     public static function run() {
-        self::runInternal();
+        $actionName = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
+        $methodName = $_SERVER['REQUEST_METHOD'];
+        self::runInternal($actionName, $methodName);
     }
 
-    private static function runInternal($actionName = null, $methodName = null, array $parameters = []) {
-        self::initRequest();
-        $requestActionName = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
-        $actionName = is_null($actionName) ? $requestActionName : $actionName;
-        $methodName = is_null($methodName) ? self::$request->getMethod() : $methodName;
+    /**
+     * Get request data for the current request. Both url and request body parameters are returned.
+     * @return array The request data as associative array.
+     */
+    public static function getRequestParameters() {
+        $method = $_SERVER['REQUEST_METHOD'];
+        if (is_null(self::$requestData[$method])) {
+            self::$requestData[$method] = self::findRequestParameters($method);
+        }
+        return self::$requestData[$method];
+    }
 
+    private static function runInternal($actionName, $methodName, array $parameters = []) {
         $actionHandler = self::route($actionName, $methodName);
         list($callback, $placeholders) = self::getCallbackAndPlaceholders($actionHandler);
+
+        // Only fill request data if the handler needs it.
         $parameters = empty($placeholders) ? $parameters :
-                array_merge($placeholders, self::$request->getData(), $parameters);
+                array_merge($placeholders, self::getRequestParameters(), $parameters);
 
         call_user_func_array($callback, $parameters);
     }
 
-    private static function initRequest() {
-        if (is_null(self::$request)) {
-            self::$request = new Request();
+    private static function findRequestParameters($method) {
+        // GET parameters are always overwritten by others, when in conflict.
+        switch ($method) {
+            case Routes::GET:
+                return $_GET;
+            case Routes::POST:
+                return array_merge($_GET, $_POST);
+            case Routes::PUT: // Fallthrough.
+            case Routes::DELETE:
+                $requestData = self::getRequestBody();
+                return array_merge($_GET, $requestData);
+            default:
+                return []; // Other request methods not supported yet.
         }
+    }
+
+    private static function getRequestBody() {
+        if (is_null(self::$requestBody)) {
+            self::$requestBody = [];
+            parse_str(file_get_contents("php://input"), self::$requestBody);
+        }
+        return self::$requestBody;
     }
 
     private static function route($actionName, $methodName) {
@@ -197,64 +220,6 @@ class Routes {
             $t[] = $key . $kvGlue . $value;
         }
         return implode($pairGlue, $t);
-    }
-
-}
-
-class Request {
-
-    private $method;
-    private $data;
-
-    public function __construct() {
-        $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->data = [
-                Routes::GET => null,
-                Routes::POST => null,
-                Routes::PUT => null,
-                Routes::DELETE => null
-        ];
-    }
-
-    /**
-     * Get the current HTTP method.
-     * @return string HTTP request method.
-     */
-    public function getMethod() {
-        return $this->method;
-    }
-
-    /**
-     * Get the request data for current or any HTTP method.
-     * @param string $method HTTP method. If null, current method is used.
-     * @return array Request data. GET parameters are always included, but overwritten if their
-     * name is in conflict with other parameter.
-     */
-    public function getData($method = null) {
-        if ($method == null) {
-            $method = $this->method;
-        }
-        if (is_null($this->data[$method])) {
-            $this->data[$method] = $this->getRequestData($method);
-        }
-        return $this->data[$this->method];
-    }
-
-    private function getRequestData($method) {
-        // GET parameters are always overwritten by others, when in conflict.
-        switch ($method) {
-            case Routes::GET:
-                return $_GET;
-            case Routes::POST:
-                return array_merge($_GET, $_POST);
-            case Routes::PUT: // Fallthrough.
-            case Routes::DELETE:
-                $requestData = [];
-                parse_str(file_get_contents("php://input"), $requestData);
-                return array_merge($_GET, $requestData);
-            default:
-                return []; // Other request methods not supported yet.
-        }
     }
 
 }

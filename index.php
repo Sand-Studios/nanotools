@@ -9,7 +9,7 @@ use nanotools\Routes;
 use nanotools\Template;
 
 require('lib/nanotools/Import.php');
-Import::namespaced('lib'); // == Import::directory('lib/nanotools');
+Import::namespaced('lib'); // Has to be namespaced.
 Import::directory('actions'); // == Import::namespaced('actions'); -> since IndexAction is not namespaced
 
 Container::prototype('template', function () use ($conf) {
@@ -34,6 +34,7 @@ Container::singleton('database', function () {
 Routes::get('index', new IndexAction());
 
 Routes::get('user', function ($id) {
+    var_dump(func_get_args());
     if (!is_numeric($id)) {
         $id = 1;
     }
