@@ -2,15 +2,15 @@
 
 $conf = require('conf.php');
 
+use nanotools\ClassLoader;
 use nanotools\Container;
 use nanotools\Database;
-use nanotools\Import;
 use nanotools\Routes;
 use nanotools\Template;
 
-require('lib/nanotools/Import.php');
-Import::namespaced('lib'); // Has to be namespaced.
-Import::directory('actions'); // == Import::namespaced('actions'); -> since IndexAction is not namespaced
+require('lib/nanotools/ClassLoader.php');
+ClassLoader::mount('lib/nanotools', 'nanotools'); // == ::mount('lib') == ::mount('lib', '');
+ClassLoader::mount('actions');
 
 Container::prototype('template', function () use ($conf) {
     return new Template($conf['viewDirectory'], 'layout');
