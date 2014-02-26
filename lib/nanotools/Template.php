@@ -20,7 +20,7 @@ class Template {
      * @throws Exception When the provided paths are incorrect.
      */
     public final function __construct($viewDirectory, $layoutFileName) {
-        if (empty($viewDirectory) || !file_exists($viewDirectory) || !is_dir($viewDirectory)) {
+        if (!file_exists($viewDirectory) || !is_dir($viewDirectory)) {
             throw new Exception("Directory does not exist: $viewDirectory.");
         }
         $this->viewDirectory = $viewDirectory;

@@ -1,6 +1,7 @@
 <?php
 
 namespace nanotools;
+
 use Exception;
 
 /**
