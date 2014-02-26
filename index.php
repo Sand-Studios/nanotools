@@ -9,7 +9,7 @@ use nanotools\Routes;
 use nanotools\Template;
 
 require('lib/nanotools/ClassLoader.php');
-ClassLoader::mount('lib/nanotools', 'nanotools'); // == ::mount('lib') == ::mount('lib', '');
+ClassLoader::mount('lib/nanotools', 'nanotools'); // == mount('lib') == mount('lib', '');
 ClassLoader::mount('actions');
 
 Container::prototype('template', function () use ($conf) {
