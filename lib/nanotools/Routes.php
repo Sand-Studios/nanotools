@@ -21,9 +21,9 @@ class Routes {
 
     private static $requestBody = null;
     private static $requestData = [
-            self::GET    => null,
-            self::POST   => null,
-            self::PUT    => null,
+            self::GET => null,
+            self::POST => null,
+            self::PUT => null,
             self::DELETE => null
     ];
 
@@ -82,10 +82,13 @@ class Routes {
     /**
      * Bootstrap and run another action handler. Will be routed for HTTP GET.
      * @param string $actionName        The action name.
-     * @param array  $requestParameters Additional request parameters. Will override existing ones.
-     * @param bool   $exit              Whether to exit after the execution returns.
+     * @param array  $requestParameters Additional request parameters. Will
+     *                                  override existing ones.
+     * @param bool   $exit              Whether to exit after the execution
+     *                                  returns.
      */
-    public static function forward($actionName, array $requestParameters = [], $exit = true) {
+    public static function forward($actionName, array $requestParameters = [],
+                                   $exit = true) {
         self::runInternal($actionName, Routes::GET, $requestParameters);
         if ($exit) {
             exit;
@@ -102,7 +105,8 @@ class Routes {
         $uri = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
         $requestParameters['action'] = $actionName;
 
-        $header = "Location: http://$host$uri/index.php"; // TODO: what about rewritten urls?
+        // TODO: what about rewritten urls?
+        $header = "Location: http://$host$uri/index.php";
         if (count($requestParameters) > 0) {
             $header .= '?' . self::keyValueImplode('=', '&', $requestParameters);
         }
@@ -114,13 +118,15 @@ class Routes {
      * Bootstrap and run an action based on current http request.
      */
     public static function run() {
-        $actionName = isset($_GET['action']) ? $_GET['action'] : self::$defaultActionName;
+        $actionName = isset($_GET['action']) ? $_GET['action']
+                : self::$defaultActionName;
         $methodName = $_SERVER['REQUEST_METHOD'];
         self::runInternal($actionName, $methodName);
     }
 
     /**
-     * Get request data for the current request. Both url and request body parameters are returned.
+     * Get request data for the current request. Both url and request body
+     * parameters are returned.
      * @return array The request data as associative array.
      */
     public static function getRequestParameters() {
@@ -131,9 +137,10 @@ class Routes {
         return self::$requestData[$method];
     }
 
-    private static function runInternal($actionName, $methodName, array $parameters = []) {
-        $actionHandler = self::route($actionName, $methodName);
-        list($callback, $placeholders) = self::getCallbackAndPlaceholders($actionHandler);
+    private static function runInternal($actionName, $methodName,
+                                        array $parameters = []) {
+        $handler = self::route($actionName, $methodName);
+        list($callback, $placeholders) = self::getCallbackAndPlaceholders($handler);
 
         // Only fill request data if the handler needs it.
         $parameters = empty($placeholders) ? $parameters :

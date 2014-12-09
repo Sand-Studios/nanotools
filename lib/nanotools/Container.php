@@ -15,7 +15,8 @@ class Container {
     private static $initializers = [];
 
     /**
-     * The singleton instance cache. If a key exists here, the component is a singleton.
+     * The singleton instance cache. If a key exists here, the component is a
+     * singleton.
      */
     private static $singletons = [];
 
@@ -50,7 +51,8 @@ class Container {
             throw new Exception('No component under that name.');
         }
         $initializer = self::$initializers[$name];
-        if (array_key_exists($name, self::$singletons)) { // Check if not already created.
+        // Check if not already created.
+        if (array_key_exists($name, self::$singletons)) {
             if (is_null(self::$singletons[$name])) {
                 self::$singletons[$name] = $initializer();
             }

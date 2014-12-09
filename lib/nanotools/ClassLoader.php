@@ -16,21 +16,29 @@ class ClassLoader {
 
     /**
      * Create a ClassLoader instance.
-     * @param string $namespacePrefix The prefix stripped from the class name when loading.
+     * @param string $namespacePrefix The prefix stripped from the class name
+     *                                when loading.
      */
     public function __construct($namespacePrefix = "") {
         $this->namespacePrefix = $namespacePrefix;
     }
 
     /**
-     * Create and register a ClassLoader for a single directory and namespace prefix.
+     * Create and register a ClassLoader for a single directory and namespace
+     * prefix.
      * @param string $directory       The source root directory.
-     * @param string $namespacePrefix The prefix stripped from the class name when loading.
+     * @param string $namespacePrefix The prefix stripped from the class name
+     *                                when loading.
+     * @param bool   $throw           Whether to throw exception when
+     *                                registering fails.
+     * @param bool   $prepend         Whether to prepend it before existing
+     *                                ClassLoaders.
      */
-    public static function mount($directory, $namespacePrefix = "") {
+    public static function mount($directory, $namespacePrefix = "",
+                                 $throw = true, $prepend = false) {
         $classLoader = new ClassLoader($namespacePrefix);
         $classLoader->addDirectory($directory);
-        spl_autoload_register([$classLoader, self::LOAD_METHOD]);
+        $classLoader->register();
     }
 
     /**
@@ -47,10 +55,11 @@ class ClassLoader {
 
     /**
      * Register this ClassLoader.
-     * @param bool $prepend Whether to put prepend it before existing ClassLoaders.
+     * @param bool $throw   Whether to throw exception when registering fails.
+     * @param bool $prepend Whether to prepend it before existing ClassLoaders.
      */
-    public function register($prepend = false) {
-        spl_autoload_register([$this, self::LOAD_METHOD], true, $prepend);
+    public function register($throw = true, $prepend = false) {
+        spl_autoload_register([$this, self::LOAD_METHOD], $throw, $prepend);
     }
 
     /**
@@ -73,7 +82,8 @@ class ClassLoader {
 
         // Get the relative path in source directory.
         $classAfterPrefix = substr($class, $prefixLength);
-        $pathInSourceDirectory = str_replace('\\', '/', $classAfterPrefix) . '.php';
+        $pathInSourceDirectory = str_replace('\\', '/', $classAfterPrefix)
+                . '.php';
 
         foreach ($this->directories as $sourceDirectory) {
             $file = $sourceDirectory . $pathInSourceDirectory;

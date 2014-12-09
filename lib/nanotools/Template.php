@@ -70,7 +70,8 @@ class Template {
     /**
      * Render a view script to string. Then assign it as a variable.
      * @param string $script       The script name, without php extension.
-     * @param string $variableName The variable name, under which the rendered view is assigned.
+     * @param string $variableName The variable name, under which the rendered
+     *                             view is assigned.
      */
     public function renderAndAssign($script, $variableName) {
         $this->assign($variableName, $this->renderToString($script));
@@ -83,7 +84,8 @@ class Template {
     }
 
     public function getScriptFile($script) {
-        $scriptFile = $this->viewDirectory . self::DIRECTORY_SEPARATOR . $script . '.php';
+        $scriptFile = $this->viewDirectory . self::DIRECTORY_SEPARATOR
+                . $script . '.php';
         return $scriptFile;
     }
 
