@@ -37,17 +37,17 @@ class Routes {
 
     /**
      * Define an action handler for HTTP GET.
-     * @param string $actionName    The action name.
-     * @param mixed  $actionHandler The Callable or class implementing run().
+     * @param string   $actionName    The action name.
+     * @param callable $actionHandler The callable handler.
      */
-    public static function get($actionName, $actionHandler) {
+    public static function get($actionName, callable $actionHandler) {
         self::register($actionName, self::GET, $actionHandler);
     }
 
     /**
      * Define an action handler for HTTP POST.
      * @param string $actionName    The action name.
-     * @param mixed  $actionHandler The Callable or class implementing run().
+     * @param mixed  $actionHandler The callable handler.
      */
     public static function post($actionName, $actionHandler) {
         self::register($actionName, self::POST, $actionHandler);
@@ -55,27 +55,27 @@ class Routes {
 
     /**
      * Define an action handler for HTTP PUT.
-     * @param string $actionName    The action name.
-     * @param mixed  $actionHandler The Callable or class implementing run().
+     * @param string   $actionName    The action name.
+     * @param callable $actionHandler The callable handler.
      */
-    public static function put($actionName, $actionHandler) {
+    public static function put($actionName, callable $actionHandler) {
         self::register($actionName, self::PUT, $actionHandler);
     }
 
     /**
      * Define an action handler for HTTP DELETE.
-     * @param string $actionName    The action name.
-     * @param mixed  $actionHandler The Callable or class implementing run().
+     * @param string   $actionName    The action name.
+     * @param callable $actionHandler The callable handler.
      */
-    public static function delete($actionName, $actionHandler) {
+    public static function delete($actionName, callable $actionHandler) {
         self::register($actionName, self::DELETE, $actionHandler);
     }
 
     /**
      * Define an action handler for resource not found.
-     * @param mixed $actionHandler The Callable or class implementing run().
+     * @param callable $actionHandler The callable handler..
      */
-    public static function notFound($actionHandler) {
+    public static function notFound(callable $actionHandler) {
         self::$notFoundHandler = $actionHandler;
     }
 
@@ -139,14 +139,16 @@ class Routes {
 
     private static function runInternal($actionName, $methodName,
                                         array $parameters = []) {
-        $handler = self::route($actionName, $methodName);
-        list($callback, $placeholders) = self::getCallbackAndPlaceholders($handler);
+        $callback = self::route($actionName, $methodName);
+        $placeholders = self::getPlaceholders($callback);
 
         // Only fill request data if the handler needs it.
-        $parameters = empty($placeholders) ? $parameters :
-                array_merge($placeholders, self::getRequestParameters(), $parameters);
+        $arguments = array_merge($placeholders, self::getRequestParameters(),
+                $parameters);
 
-        call_user_func_array($callback, $parameters);
+        // Behaves as named arguments, as names are manually matched beforehand.
+        /** @var callable $callback */
+        $callback(...array_values($arguments));
     }
 
     private static function findRequestParameters($method) {
@@ -186,7 +188,8 @@ class Routes {
         throw new Exception('No action defined.');
     }
 
-    private static function register($actionName, $methodName, $actionHandler) {
+    private static function register($actionName, $methodName,
+                                     callable $actionHandler) {
         if (!is_string($actionName)) {
             throw new Exception('Need to set an action name.');
         }
@@ -196,30 +199,24 @@ class Routes {
         self::$handlers[$actionName][$methodName] = $actionHandler;
     }
 
-    private static function getCallbackAndPlaceholders($actionHandler) {
-        list($callback, $reflector) = self::getCallbackAndReflector($actionHandler);
+    private static function getPlaceholders(callable $actionHandler) {
+        // This is really ugly...
+        if (is_object($actionHandler)) { // Callable by __invoke.
+            $reflectionFunction = new ReflectionMethod($actionHandler, '__invoke');
+        } else { // Basic callable.
+            $reflectionFunction = new ReflectionFunction($actionHandler);
+        }
 
         $placeholders = [];
-        foreach ($reflector->getParameters() as $p) {
-            if (!$p->isOptional()) {
-                $placeholders[$p->getName()] = null;
+        foreach ($reflectionFunction->getParameters() as $p) {
+            $parameterName = $p->getName();
+            if ($p->isDefaultValueAvailable()) {
+                $placeholders[$parameterName] = $p->getDefaultValue();
+            } else {
+                $placeholders[$parameterName] = null;
             }
         }
-        return [$callback, $placeholders];
-    }
-
-    private static function getCallbackAndReflector($actionHandler) {
-        if (is_callable($actionHandler)) {
-            $reflector = new ReflectionFunction($actionHandler);
-            return [$actionHandler, $reflector];
-        }
-        // TODO: Support just callables?
-        if (is_callable([$actionHandler, self::ACTION_RUN_METHOD])) {
-            $callback = [$actionHandler, self::ACTION_RUN_METHOD];
-            $reflector = new ReflectionMethod($actionHandler, self::ACTION_RUN_METHOD);
-            return [$callback, $reflector];
-        }
-        throw new Exception('Defined action is not callable or does not have a method run()');
+        return $placeholders;
     }
 
     private static function keyValueImplode($kvGlue, $pairGlue, $array) {

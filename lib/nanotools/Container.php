@@ -3,6 +3,7 @@
 namespace nanotools;
 
 use Exception;
+use ReflectionFunction;
 
 class Container {
 
@@ -24,6 +25,8 @@ class Container {
      * Register a new component initializer under a name with prototype scope.
      * @param string   $name        The registered name.
      * @param callable $initializer The callable that creates the component.
+     *                              May contain parameters which will be
+     *                              injected if possible.
      * @throws Exception When the name is already in use.
      */
     public static function prototype($name, callable $initializer) {
@@ -34,6 +37,8 @@ class Container {
      * Register a new component initializer under a name with singleton scope.
      * @param string   $name        The registered name.
      * @param callable $initializer The callable that creates the component.
+     *                              May contain parameters which will be
+     *                              injected if possible.
      * @throws Exception When the name is already in use.
      */
     public static function singleton($name, callable $initializer) {
@@ -44,21 +49,40 @@ class Container {
      * Get the component for a name.
      * @param string $name The name.
      * @return object The instance.
-     * @throws Exception When nothing is found.
+     * @throws Exception When component cannot be returned. Either it is not
+     *                     registered, or it depends on another component, that
+     *                     cannot be injected.
      */
     public static function get($name) {
         if (!self::registered($name)) {
             throw new Exception('No component under that name.');
         }
         $initializer = self::$initializers[$name];
+        $reflectionFunction = new ReflectionFunction($initializer);
+        $parameters = [];
+
+        foreach ($reflectionFunction->getParameters() as $dependency) {
+            $dependencyName = $dependency->getName();
+            if (!self::registered($dependencyName)) {
+                // Allow default value to be filled.
+                // In this case, isDefaultValueAvailable() equiv. isOptional()
+                if (!$dependency->isDefaultValueAvailable()) {
+                    throw new Exception("Cannot instantiate $name:
+                        Unsatisfied dependency: $dependencyName");
+                }
+            } else {
+                $parameters[] = self::get($dependencyName);
+            }
+        }
+
         // Check if not already created.
         if (array_key_exists($name, self::$singletons)) {
             if (is_null(self::$singletons[$name])) {
-                self::$singletons[$name] = $initializer();
+                self::$singletons[$name] = $initializer(...$parameters);
             }
             return self::$singletons[$name];
         }
-        return $initializer();
+        return $initializer(...$parameters);
     }
 
     /**
@@ -66,7 +90,8 @@ class Container {
      * @param string $name The id.
      * @return bool Whether to id exists or not.
      */
-    public static function registered($name) {
+    public
+    static function registered($name) {
         return array_key_exists($name, self::$initializers);
     }
 

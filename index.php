@@ -21,6 +21,26 @@ Container::singleton('database', function () {
     return $db;
 });
 
+// Simple registered component.
+Container::singleton('a', function () {
+    return 'a';
+});
+
+// Registered component with automatically injected dependencies.
+Container::singleton('b', function ($a) {
+    return 'b' . $a;
+});
+
+// Registered component with missing dependencies. Will throw error on get()
+Container::singleton('d', function ($c) {
+    return 'd' . $c;
+});
+
+// Registered component with missing, but defaulted dependencies. Is ok.
+Container::singleton('f', function ($e = 'e') {
+    return 'f' . $e;
+});
+
 
 //$db = Container::get('database');
 ///** @var Database $db */
@@ -42,6 +62,16 @@ Routes::get('user', function ($id) {
     echo 'do the PDO query';
 //    $user = $db->select('SELECT * FROM user WhERE id = :id', ['id' => $id]);
 //    var_dump($user);
+});
+
+Routes::get('container', function () {
+    echo '<p>' . Container::get('b') . '</p>';
+    try {
+        echo '<p>' . Container::get('d') . '</p>';
+    } catch (Exception $exception) {
+        echo 'Container exception: ' . $exception->getMessage();
+    }
+    echo '<p>' . Container::get('f') . '</p>';
 });
 
 Routes::notFound(function () {

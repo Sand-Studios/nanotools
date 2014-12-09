@@ -5,9 +5,9 @@ A very small PHP tool set. Handles simple routing, templating, classloading, and
 
 todo
 ----
-- Enhance Container to automatically instantiate and inject dependencies to initializer methods:
-    * e.g. Container::register('renderer', function($styles) {...code...}) will get $styles injected upon instantiation
-- Refactor routes to also work non-statically. Keep the static helpers.
+- Refactor Routes & Container to also work non-statically
+    * Similar to ClassLoader
+    * Keep the static helpers
 - More Docs
 - Better Tests
 - Demo Project (separate from the lib itself)

@@ -10,7 +10,7 @@ class IndexAction {
         $this->template = Container::get('template');
     }
 
-    public function run($action) {
+    public function __invoke() {
         $this->template->assign('args', func_get_args());
         $this->template->renderAndAssign('index', 'content');
         $this->template->render('layout');
