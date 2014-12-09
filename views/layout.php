@@ -5,8 +5,9 @@
     <title>Title</title>
 </head>
 <body>
-Start of content.
+<h1>Demo</h1>
+<p><i>Start of content.</i></p>
 <?= $content; ?>
-End of content.
+<p><i>End of content.</i></p>
 </body>
 </html>
