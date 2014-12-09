@@ -1,13 +1,11 @@
 <?php
 
-use nanotools\Container;
-
 class IndexAction {
 
     private $template;
 
-    public function __construct() {
-        $this->template = Container::get('template');
+    public function __construct($template) {
+        $this->template = $template;
     }
 
     public function __invoke() {

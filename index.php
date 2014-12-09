@@ -41,6 +41,10 @@ Container::singleton('f', function ($e = 'e') {
     return 'f' . $e;
 });
 
+Container::prototype('index_action', function ($template) {
+    return new IndexAction($template);
+});
+
 
 //$db = Container::get('database');
 ///** @var Database $db */
@@ -50,7 +54,7 @@ Container::singleton('f', function ($e = 'e') {
 //                    description TEXT)");
 //$db->insert('user', ['name' => 'a user', 'description' => 'a description']);
 
-Routes::get('index', new IndexAction());
+Routes::get('index', Container::get('index_action'));
 
 Routes::get('user', function ($id) {
     var_dump(func_get_args());
