@@ -21,7 +21,7 @@ class Container {
 
     /**
      * Register a new component initializer under a name with prototype scope.
-     * @param string $name The registered name.
+     * @param string   $name        The registered name.
      * @param callable $initializer The callable that creates the component.
      * @throws Exception When the name is already in use.
      */
@@ -31,7 +31,7 @@ class Container {
 
     /**
      * Register a new component initializer under a name with singleton scope.
-     * @param string $name The registered name.
+     * @param string   $name        The registered name.
      * @param callable $initializer The callable that creates the component.
      * @throws Exception When the name is already in use.
      */

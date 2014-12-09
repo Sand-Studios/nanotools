@@ -24,7 +24,7 @@ class ClassLoader {
 
     /**
      * Create and register a ClassLoader for a single directory and namespace prefix.
-     * @param string $directory The source root directory.
+     * @param string $directory       The source root directory.
      * @param string $namespacePrefix The prefix stripped from the class name when loading.
      */
     public static function mount($directory, $namespacePrefix = "") {

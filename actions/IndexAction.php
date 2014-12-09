@@ -12,7 +12,8 @@ class IndexAction {
 
     public function run($action) {
         var_dump(func_get_args());
-        $this->template->render('index');
+        $this->template->renderAndAssign('index', 'content');
+        $this->template->render('layout');
     }
 
 }

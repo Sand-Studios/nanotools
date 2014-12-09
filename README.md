@@ -5,14 +5,9 @@ A very small PHP tool set. Handles simple routing, templating, classloading, and
 
 todo
 ----
-- Remove Database -> There are plenty other modules to use
-- Remove Session -> No added value
-- Refactoring and renaming in layout.
-  - Template::render() -> Template::renderWithLayout()
-  - Template::renderPartial() -> Template::render()
-- Enhancing Container to automatically instantiate and inject dependencies to initializer lambdas:
-  - e.g. Container::register('renderer', function($styles) {...code...}) will get $styles injected upon instantiation
-
+- Enhance Container to automatically instantiate and inject dependencies to initializer methods:
+    * e.g. Container::register('renderer', function($styles) {...code...}) will get $styles injected upon instantiation
+- Refactor routes to also work non-statically. Keep the static helpers.
 - More Docs
 - Better Tests
 - Demo Project (separate from the lib itself)

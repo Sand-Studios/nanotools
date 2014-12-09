@@ -4,7 +4,6 @@ $conf = require('conf.php');
 
 use nanotools\ClassLoader;
 use nanotools\Container;
-use nanotools\Database;
 use nanotools\Routes;
 use nanotools\Template;
 
@@ -17,7 +16,7 @@ Container::prototype('template', function () use ($conf) {
 });
 
 Container::singleton('database', function () {
-    $db = new Database('sqlite:db_file.sqlite3');
+    $db = new PDO('sqlite:db_file.sqlite3');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $db;
 });
@@ -38,10 +37,11 @@ Routes::get('user', function ($id) {
     if (!is_numeric($id)) {
         $id = 1;
     }
-    /** @var Database $db */
+    /** @var PDO $db */
     $db = Container::get('database');
-    $user = $db->select('SELECT * FROM user WhERE id = :id', ['id' => $id]);
-    var_dump($user);
+    echo 'do the PDO query';
+//    $user = $db->select('SELECT * FROM user WhERE id = :id', ['id' => $id]);
+//    var_dump($user);
 });
 
 Routes::notFound(function () {
