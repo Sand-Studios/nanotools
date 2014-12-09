@@ -38,7 +38,7 @@ class ClassLoader {
                                  $throw = true, $prepend = false) {
         $classLoader = new ClassLoader($namespacePrefix);
         $classLoader->addDirectory($directory);
-        $classLoader->register();
+        $classLoader->register($throw, $prepend);
     }
 
     /**
