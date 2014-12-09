@@ -36,7 +36,7 @@ Container::singleton('d', function ($c) {
     return 'd' . $c;
 });
 
-// Registered component with missing, but defaulted dependencies. Is ok.
+// Registered component with missing but defaulted dependencies. Is ok.
 Container::singleton('f', function ($e = 'e') {
     return 'f' . $e;
 });
