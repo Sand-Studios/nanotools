@@ -33,12 +33,14 @@ class ClassLoader {
      *                                registering fails.
      * @param bool   $prepend         Whether to prepend it before existing
      *                                ClassLoaders.
+     * @return ClassLoader The Reference to the registered ClassLoader.
      */
     public static function mount($directory, $namespacePrefix = "",
                                  $throw = true, $prepend = false) {
         $classLoader = new ClassLoader($namespacePrefix);
         $classLoader->addDirectory($directory);
         $classLoader->register($throw, $prepend);
+        return $classLoader;
     }
 
     /**
