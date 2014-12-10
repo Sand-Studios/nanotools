@@ -11,37 +11,40 @@ require('lib/nanotools/ClassLoader.php');
 ClassLoader::mount('lib/nanotools', 'nanotools'); // == mount('lib') == mount('lib', '');
 ClassLoader::mount('actions');
 
-Container::prototype('template', function () use ($conf) {
+$container = new Container();
+
+$container->prototype('template', function () use ($conf) {
     return new Template($conf['viewDirectory'], 'layout');
 });
 
-Container::singleton('database', function () {
+$container->singleton('database', function () {
     $db = new PDO('sqlite:db_file.sqlite3');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $db;
 });
 
 // Simple registered component.
-Container::singleton('a', function () {
+$container->singleton('a', function () {
     return 'a';
 });
 
 // Registered component with automatically injected dependencies.
-Container::singleton('b', function ($a) {
+$container->singleton('b', function ($a) {
     return 'b' . $a;
 });
 
 // Registered component with missing dependencies. Will throw error on get()
-Container::singleton('d', function ($c) {
+$container->singleton('d', function ($c) {
     return 'd' . $c;
 });
 
 // Registered component with missing but defaulted dependencies. Is ok.
-Container::singleton('f', function ($e = 'e') {
+$container->singleton('f', function ($e = 'e') {
     return 'f' . $e;
 });
 
-Container::prototype('index_action', function ($template) {
+// Action handler as a registered component. Template is injected.
+$container->prototype('index_action', function ($template) {
     return new IndexAction($template);
 });
 
@@ -54,28 +57,28 @@ Container::prototype('index_action', function ($template) {
 //                    description TEXT)");
 //$db->insert('user', ['name' => 'a user', 'description' => 'a description']);
 
-Routes::get('index', Container::get('index_action'));
+Routes::get('index', $container->get('index_action'));
 
-Routes::get('user', function ($id) {
+Routes::get('user', function ($id) use ($container) {
     var_dump(func_get_args());
     if (!is_numeric($id)) {
         $id = 1;
     }
     /** @var PDO $db */
-    $db = Container::get('database');
+    $db = $container->get('database');
     echo 'do the PDO query';
 //    $user = $db->select('SELECT * FROM user WhERE id = :id', ['id' => $id]);
 //    var_dump($user);
 });
 
-Routes::get('container', function () {
-    echo '<p>' . Container::get('b') . '</p>';
+Routes::get('container', function () use ($container) {
+    echo '<p>' . $container->get('b') . '</p>';
     try {
-        echo '<p>' . Container::get('d') . '</p>';
+        echo '<p>' . $container->get('d') . '</p>';
     } catch (Exception $exception) {
         echo 'Container exception: ' . $exception->getMessage();
     }
-    echo '<p>' . Container::get('f') . '</p>';
+    echo '<p>' . $container->get('f') . '</p>';
 });
 
 Routes::notFound(function () {

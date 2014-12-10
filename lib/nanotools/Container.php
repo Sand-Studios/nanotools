@@ -13,13 +13,13 @@ class Container {
     /**
      * The closures creating the components.
      */
-    private static $initializers = [];
+    private $initializers = [];
 
     /**
      * The singleton instance cache. If a key exists here, the component is a
      * singleton.
      */
-    private static $singletons = [];
+    private $singletons = [];
 
     /**
      * Register a new component initializer under a name with prototype scope.
@@ -29,8 +29,8 @@ class Container {
      *                              injected if possible.
      * @throws Exception When the name is already in use.
      */
-    public static function prototype($name, callable $initializer) {
-        self::register($name, $initializer, self::PROTOTYPE);
+    public function prototype($name, callable $initializer) {
+        $this->register($name, $initializer, self::PROTOTYPE);
     }
 
     /**
@@ -41,8 +41,8 @@ class Container {
      *                              injected if possible.
      * @throws Exception When the name is already in use.
      */
-    public static function singleton($name, callable $initializer) {
-        self::register($name, $initializer, self::SINGLETON);
+    public function singleton($name, callable $initializer) {
+        $this->register($name, $initializer, self::SINGLETON);
     }
 
     /**
@@ -53,17 +53,17 @@ class Container {
      *                     registered, or it depends on another component, that
      *                     cannot be injected.
      */
-    public static function get($name) {
-        if (!self::registered($name)) {
+    public function get($name) {
+        if (!$this->registered($name)) {
             throw new Exception('No component under that name.');
         }
-        $initializer = self::$initializers[$name];
+        $initializer = $this->initializers[$name];
         $reflectionFunction = new ReflectionFunction($initializer);
         $parameters = [];
 
         foreach ($reflectionFunction->getParameters() as $dependency) {
             $dependencyName = $dependency->getName();
-            if (!self::registered($dependencyName)) {
+            if (!$this->registered($dependencyName)) {
                 // Allow default value to be filled.
                 // In this case, isDefaultValueAvailable() equiv. isOptional()
                 if (!$dependency->isDefaultValueAvailable()) {
@@ -71,16 +71,16 @@ class Container {
                         Unsatisfied dependency: $dependencyName");
                 }
             } else {
-                $parameters[] = self::get($dependencyName);
+                $parameters[] = $this->get($dependencyName);
             }
         }
 
         // Check if not already created.
-        if (array_key_exists($name, self::$singletons)) {
-            if (is_null(self::$singletons[$name])) {
-                self::$singletons[$name] = $initializer(...$parameters);
+        if (array_key_exists($name, $this->singletons)) {
+            if (is_null($this->singletons[$name])) {
+                $this->singletons[$name] = $initializer(...$parameters);
             }
-            return self::$singletons[$name];
+            return $this->singletons[$name];
         }
         return $initializer(...$parameters);
     }
@@ -90,18 +90,17 @@ class Container {
      * @param string $name The id.
      * @return bool Whether to id exists or not.
      */
-    public
-    static function registered($name) {
-        return array_key_exists($name, self::$initializers);
+    public function registered($name) {
+        return array_key_exists($name, $this->initializers);
     }
 
-    private static function register($name, callable $initializer, $scope) {
-        if (self::registered($name)) {
+    private function register($name, callable $initializer, $scope) {
+        if ($this->registered($name)) {
             throw new Exception("The name: $name is already in use");
         }
-        self::$initializers[$name] = $initializer;
+        $this->initializers[$name] = $initializer;
         if ($scope == self::SINGLETON) {
-            self::$singletons[$name] = null;
+            $this->singletons[$name] = null;
         }
     }
 
