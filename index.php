@@ -13,15 +13,7 @@ ClassLoader::mount('actions');
 
 $container = new Container();
 
-$container->prototype('template', function () use ($conf) {
-    return new Template($conf['viewDirectory'], 'layout');
-});
-
-$container->singleton('database', function () {
-    $db = new PDO('sqlite:db_file.sqlite3');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    return $db;
-});
+// -- Simple things to test the container.
 
 // Simple registered component.
 $container->singleton('a', function () {
@@ -43,7 +35,22 @@ $container->singleton('f', function ($e = 'e') {
     return 'f' . $e;
 });
 
-// Action handler as a registered component. Template is injected.
+
+// -- Some more realistic components.
+
+// Template renderer, no dependencies.
+$container->prototype('template', function () use ($conf) {
+    return new Template($conf['viewDirectory']);
+});
+
+// Database connection. No dependencies.
+$container->singleton('database', function () {
+    $db = new PDO('sqlite:db_file.sqlite3');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    return $db;
+});
+
+// Action handler. Template is injected.
 $container->prototype('index_action', function ($template) {
     return new IndexAction($template);
 });
@@ -67,8 +74,6 @@ Routes::get('user', function ($id) use ($container) {
     /** @var PDO $db */
     $db = $container->get('database');
     echo 'do the PDO query';
-//    $user = $db->select('SELECT * FROM user WhERE id = :id', ['id' => $id]);
-//    var_dump($user);
 });
 
 Routes::get('container', function () use ($container) {

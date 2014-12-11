@@ -8,8 +8,6 @@ use ReflectionMethod;
 
 class Routes {
 
-    const ACTION_RUN_METHOD = 'run';
-
     const GET = 'GET';
     const POST = 'POST';
     const PUT = 'PUT';
@@ -143,8 +141,11 @@ class Routes {
         $placeholders = self::getPlaceholders($callback);
 
         // Only fill request data if the handler needs it.
-        $arguments = array_merge($placeholders, self::getRequestParameters(),
-                $parameters);
+        $arguments = $placeholders;
+        if (!empty($placeholders)) {
+            $arguments = array_merge($placeholders,
+                    self::getRequestParameters(), $parameters);
+        }
 
         // Behaves as named arguments, as names are manually matched beforehand.
         /** @var callable $callback */
