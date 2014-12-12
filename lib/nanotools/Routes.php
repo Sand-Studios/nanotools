@@ -14,8 +14,10 @@ class Routes {
     const DELETE = 'DELETE';
 
     private static $handlers = [];
-    private static $defaultActionName = 'index';
     private static $notFoundHandler = null;
+
+    private static $actionParameterName = 'action';
+    private static $defaultActionName = 'index';
 
     private static $requestBody = null;
     private static $requestData = [
@@ -24,6 +26,14 @@ class Routes {
             self::PUT => null,
             self::DELETE => null
     ];
+
+    /**
+     * Define the request parameter name, from which to take the action.
+     * @param string $actionParameterName The action parameter name.
+     */
+    public static function actionParameter($actionParameterName) {
+        self::$actionParameterName = $actionParameterName;
+    }
 
     /**
      * Define the default (index) action.
@@ -101,7 +111,7 @@ class Routes {
     public static function redirect($actionName, array $requestParameters = []) {
         $host = $_SERVER['HTTP_HOST'];
         $uri = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-        $requestParameters['action'] = $actionName;
+        $requestParameters[self::$actionParameterName] = $actionName;
 
         // TODO: what about rewritten urls?
         $header = "Location: http://$host$uri/index.php";
@@ -116,7 +126,8 @@ class Routes {
      * Bootstrap and run an action based on current http request.
      */
     public static function run() {
-        $actionName = isset($_GET['action']) ? $_GET['action']
+        $actionName = isset($_GET[self::$actionParameterName])
+                ? $_GET[self::$actionParameterName]
                 : self::$defaultActionName;
         $methodName = $_SERVER['REQUEST_METHOD'];
         self::runInternal($actionName, $methodName);
