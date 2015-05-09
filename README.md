@@ -7,7 +7,7 @@ todo
 ----
 - Refactor Routes to work non-statically
     * Register actions once, fire as many times as needed (with REQUEST_DATA parameter)
-    * RREQUEST_DATA is constructed separately (may actually do some lazy loading)
+    * REQUEST_DATA is constructed separately (may actually do some lazy loading)
     * Keep static helpers where it makes sense
 - Docs & Examples
 - Tests
